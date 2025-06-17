@@ -222,4 +222,18 @@ describe('store', function(){
       });
     });
   });
+
+  describe('.close()', function(){
+    it('should close the connection without errors', function(done){
+      tester.close().then(function(){
+        expect(tester.Client).to.not.exist;
+        expect(tester.Db).to.not.exist;
+        done();
+      }).catch(done);
+    });
+  });
+});
+
+after(function(done){
+  tester.close().then(function(){ done(); }).catch(done);
 });

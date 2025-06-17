@@ -18,11 +18,15 @@ before(function(done){
 });
 
 after(function(done){
-  if (client) {
-    client.close().then(function(){ done(); }).catch(done);
-  } else {
-    done();
+  function finish(err){
+    if (err) return done(err);
+    if (client) {
+      client.close().then(function(){ done(); }).catch(done);
+    } else {
+      done();
+    }
   }
+  tester.close().then(function(){ finish(); }).catch(finish);
 });
 
 beforeEach(function(done){
