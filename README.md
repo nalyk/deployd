@@ -4,6 +4,8 @@
 
 ⚠️  Deployd is not actively maintained anymore. Important bug fixes PRs will be merged (if properly tested and documented) but the existing maintainers don't have time and motivation to build new features.
 
+This fork aims to restore compatibility with modern MongoDB versions. The original repository only worked with MongoDB 4, while this one targets MongoDB 6 and later.
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/deployd/deployd)  [![Current Version](https://img.shields.io/npm/v/deployd.svg?style=flat-square)](https://www.npmjs.org/package/deployd) [![Build Status](https://img.shields.io/travis/deployd/deployd.svg?style=flat-square)](http://travis-ci.org/deployd/deployd)
 
 ## overview
@@ -27,8 +29,8 @@ Deployd is the simplest way to build realtime APIs for web and mobile apps. Read
 
 ## Requirements
 
-Deployd is built using node and published using npm.  
-To install and use it, you need to install **[Node.JS](https://nodejs.org/en/download/)**.
+Deployd is built using Node.js and relies on MongoDB as its datastore.
+To run the current version you need **[Node.js](https://nodejs.org/)** 18 or newer and **MongoDB** 6 or newer installed on your system.
 
 ## quick start
 
@@ -100,11 +102,11 @@ the `dpd` command should be available. Type `dpd -V` and the current version sho
 
 ## install on windows
 
-The windows installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install mongodb](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) separately.
+The windows installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install MongoDB](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) 6 or later separately.
 
 ## install on macosx
 
-The macosx installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install mongodb](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/) separately.
+The macosx installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install MongoDB](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/) 6 or later separately.
 
 ## install from source
 
@@ -114,7 +116,8 @@ The macosx installer is deprecated. The recommended way is now npm (`npm install
 ## unit & integration tests
 
 	cd deployd
-	mongod &
+        # make sure MongoDB 6+ is running
+        mongod &
 	npm test
 
 ## license
