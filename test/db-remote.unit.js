@@ -6,27 +6,23 @@ var fs = require('fs')
   , assert = require('assert')
   , mongodb = require('mongodb');
 
-var mdb = new mongodb.Db(config.name, new mongodb.Server(config.host, config.port));
+var client;
+var connectionString = 'mongodb://' + config.credentials.username + ':' +
+  config.credentials.password + '@' + config.host + ':' + config.port + '/' + config.name;
 
 before(function(done){
-  mdb.open(function (err) {
-    if(err) {
-      done(err);
-    } else {
-      mdb.removeUser(config.credentials.username, function (err) {
-        // commented out because removing a non-existing user returns an error which we can safely ignore
-        //if(err) return done(err);
-        mdb.addUser(config.credentials.username, config.credentials.password, done);
-      });
-    }
-  });
+  client = new mongodb.MongoClient(connectionString);
+  client.connect().then(function () {
+    done();
+  }).catch(done);
 });
 
 after(function(done){
-  mdb.removeUser(config.credentials.username, function (err) {
-    mdb.close();
-    done(err);
-  });
+  if (client) {
+    client.close().then(function(){ done(); }).catch(done);
+  } else {
+    done();
+  }
 });
 
 beforeEach(function(done){

@@ -48,17 +48,19 @@ freq = function(url, options, fn, callback) {
 };
 
 before(function (done) {
-  var mdb = new mongodb.Db(TEST_DB.name, new mongodb.Server(TEST_DB.host, TEST_DB.port));
-  mdb.open(function (err) {
-    if(err) {
+  var url = 'mongodb://' + TEST_DB.host + ':' + TEST_DB.port;
+  var client = new mongodb.MongoClient(url);
+  client.connect()
+    .then(function () {
+      return client.db(TEST_DB.name).dropDatabase();
+    })
+    .then(function () {
+      client.close();
+      done();
+    })
+    .catch(function (err) {
       done(err);
-    } else {
-      mdb.dropDatabase(function (err) {
-        done(err);
-        mdb.close();
-      });
-    }
-  });
+    });
 });
 
 
