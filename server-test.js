@@ -11,7 +11,7 @@ const server  = deployd({
   }
 });
 
-dashboard(server);
+// dashboard(server);
 server.listen();
 server.on('listening', () =>
   console.log('Deployd fork running on http://localhost:2403'));

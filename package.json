@@ -23,7 +23,9 @@
     "cookies": "^0.7.3",
     "corser": "^2.0.1",
     "debug": "^2.2.0",
+    "deployd": "file:./",
     "doh": "^0.0.4",
+    "dpd-clientlib": "^1.0.0",
     "dpd-dashboard": "^1.1.3",
     "mongodb": "^6.3.0",
     "qs": "^6.2.1",
@@ -50,5 +52,10 @@
     "pretest": "npm link && cd test-app && npm install && npm link deployd",
     "test": "mocha --timeout 5000 --exit && cd test-app && node runtests.js",
     "release": "standard-version"
+  },
+  "overrides": {
+    "dpd-dashboard": {
+      "async": "1.5.2"
+    }
   }
 }
