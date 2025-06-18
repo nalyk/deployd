@@ -1,5 +1,7 @@
 // server.js – runs your fork *directly*
 const deployd = require('./');           // local fork
+const dashboard = require('dpd-dashboard'); // <-- ADĂUGAT
+
 const server  = deployd({
   port: 2403,
   env : process.env.NODE_ENV || 'development',
@@ -9,6 +11,7 @@ const server  = deployd({
   }
 });
 
+dashboard(server);
 server.listen();
 server.on('listening', () =>
   console.log('Deployd fork running on http://localhost:2403'));

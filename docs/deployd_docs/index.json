@@ -1,0 +1,14 @@
+{
+  "children": [
+    "getting-started",
+    "basics",
+    "collections",
+    "users",
+    "using-modules",
+    "server",
+    "developing-modules"
+  ],
+  "aliases": {
+    "server": "The Deployd Server"
+  }
+}

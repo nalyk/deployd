@@ -1,0 +1,8 @@
+{
+  "type": "Collection",
+  "name": "posts",
+  "properties": {
+    "title": "string",
+    "body":  "string"
+  }
+}
