@@ -7,8 +7,13 @@
 
 ### Requirements
 
-- [Nodejs needs to be installed](https://nodejs.org/en/download/)
-- [MongoDB community Server should be installed](https://www.mongodb.com/download-center?jmp=docs)
+- **Node.js 22.x LTS or newer** - [Download Node.js](https://nodejs.org/en/download/)
+  - This fork requires Node.js 22+ for modern JavaScript features and TLS compatibility
+- **MongoDB 6.0 or newer** - [Download MongoDB](https://www.mongodb.com/try/download/community)
+  - Compatible with MongoDB Atlas and other managed MongoDB services
+  - Supports MongoDB 6.x and 7.x with modern driver features
+
+**Note**: This modernized fork includes TLS 1.0+ compatibility for managed MongoDB services like MongoDB Atlas, Azure Cosmos DB, and AWS DocumentDB.
 
 ### Install from NPM (recommended way)
 

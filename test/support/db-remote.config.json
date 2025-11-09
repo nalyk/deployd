@@ -3,7 +3,7 @@
     "port": 27017,
     "name": "dpd-faux-remote",
     "credentials": {
-        "username": "foo",
-        "password": "secret"
+        "username": "test-user",
+        "password": "test-password"
     }
 }

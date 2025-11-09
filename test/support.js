@@ -3,12 +3,44 @@
  */
 
 expect = require('chai').expect;
-request = require('request');
+axios = require('axios');
 http = require('http');
-TEST_DB = {name: 'test-db', host: 'localhost', port: 27017};
+
+// Load environment variables from .env file
+require('dotenv').config({path: __dirname + '/.env'});
+
+// MongoDB configuration for tests
+// Use remote MongoDB if MONGODB_URI is set, otherwise localhost
+process.env.MONGODB_URI = process.env.MONGODB_URI || process.env.TEST_MONGODB_URI || 'mongodb://localhost:27017/deployd-test';
+
+TEST_DB = process.env.MONGODB_URI || {name: 'test-db', host: 'localhost', port: 27017};
 mongodb = require('mongodb');
 var Stream = require('stream');
 sh = require('shelljs');
+
+// Axios wrapper to maintain compatibility with 'request' library API
+request = function(options, callback) {
+  var axiosOptions = {
+    url: options.url || options.uri,
+    method: options.method || 'GET',
+    headers: options.headers || {},
+    data: options.body || options.json,
+    maxRedirects: 5,
+    validateStatus: function() { return true; } // Don't throw on any status
+  };
+
+  axios(axiosOptions)
+    .then(function(response) {
+      callback(null, {
+        statusCode: response.status,
+        headers: response.headers,
+        body: typeof response.data === 'object' ? JSON.stringify(response.data) : response.data
+      }, response.data);
+    })
+    .catch(function(error) {
+      callback(error, null, null);
+    });
+};
 
 // port generation
 genPort = function() {

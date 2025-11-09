@@ -29,3 +29,15 @@ test-app/node_modules
 
 package-lock.json
 yarn.lock
+
+.serena/
+.claude/
+
+# Environment variables with credentials
+.env
+.env.local
+.env.*.local
+example-app/.env
+test/.env
+test/support/.env
+test/support/db-remote.config.json

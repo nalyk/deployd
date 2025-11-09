@@ -16,12 +16,17 @@ When running in non-local environments we recommend using a simple node script t
       port: process.env.PORT || 5000,
       env: 'production',
       db: {
-        host: 'my.production.mongo.host',
-        port: 27105,
-        name: 'my-db',
-        credentials: {
-          username: 'username',
-          password: 'password'
+        // Modern MongoDB connection string (supports MongoDB Atlas, Azure Cosmos DB, etc.)
+        connectionString: process.env.MONGODB_URI || 'mongodb://localhost:27017/my-db',
+        connectionOptions: {
+          serverSelectionTimeoutMS: 30000,
+          connectTimeoutMS: 30000,
+          socketTimeoutMS: 30000,
+          tls: true,  // Required for managed MongoDB services
+          tlsAllowInvalidCertificates: true,
+          tlsAllowInvalidHostnames: true,
+          minPoolSize: 10,
+          maxPoolSize: 100
         }
       }
     });
@@ -30,12 +35,23 @@ When running in non-local environments we recommend using a simple node script t
 
     server.on('listening', function() {
       console.log("Server is listening");
+      console.log("Health checks available at /__health/live and /__health/ready");
+      console.log("Metrics available at /metrics");
     });
 
     server.on('error', function(err) {
       console.error(err);
       process.nextTick(function() { // Give the server a chance to return an error
         process.exit();
+      });
+    });
+
+    // Graceful shutdown on SIGTERM (Kubernetes, Docker)
+    process.on('SIGTERM', function() {
+      console.log('SIGTERM received - shutting down gracefully...');
+      server.close(function() {
+        console.log('Server closed');
+        process.exit(0);
       });
     });
 
@@ -48,19 +64,23 @@ When running in non-local environments we recommend using a simple node script t
       port: process.env.PORT || 5000,
       env: 'staging',
       db: {
-        host: 'my.production.mongo.host',
-        port: 27105,
-        name: 'my-db',
-        credentials: {
-          username: 'username',
-          password: 'password'
+        connectionString: process.env.MONGODB_URI || 'mongodb://localhost:27017/my-db-staging',
+        connectionOptions: {
+          serverSelectionTimeoutMS: 30000,
+          connectTimeoutMS: 30000,
+          socketTimeoutMS: 30000,
+          tls: true,
+          tlsAllowInvalidCertificates: true,
+          tlsAllowInvalidHostnames: true,
+          minPoolSize: 5,
+          maxPoolSize: 50
         }
       }
     });
 
     // remove all data in the 'todos' collection
     var todos = server.createStore('todos');
-      
+
     todos.remove(function() {
       // all todos removed
       server.listen();

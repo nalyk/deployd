@@ -37,16 +37,28 @@ Run this like any other node program.
 
 - **port** {Number} - the port to listen on
 - **db** {Object} - the database to connect to
- - **db.connectionString** {String} - The URI of the mongoDB using [standard Connection String](http://docs.mongodb.org/manual/reference/connection-string/). If `db.connectionString` is set, the other db options are ignored.
- - **db.port** {Number} - the port of the database server
- - **db.host** {String} - the ip or domain of the database server
- - **db.name** {String} - the name of the database
- - **db.credentials** {Object} - credentials for db
+ - **db.connectionString** {String} - **Recommended**: The URI of the mongoDB using [standard Connection String](http://docs.mongodb.org/manual/reference/connection-string/). Supports MongoDB Atlas, Azure Cosmos DB, AWS DocumentDB. Example: `mongodb+srv://user:pass@cluster.mongodb.net/mydb`
+ - **db.connectionOptions** {Object} - **Recommended**: MongoDB driver options (see MongoDB 6+ driver documentation)
+   - **tls** {Boolean} - Enable TLS (required for managed MongoDB services)
+   - **serverSelectionTimeoutMS** {Number} - Connection timeout (default: 30000)
+   - **connectTimeoutMS** {Number} - Initial connection timeout
+   - **socketTimeoutMS** {Number} - Socket timeout
+   - **minPoolSize** {Number} - Minimum connection pool size (default: 10 production, 1 development)
+   - **maxPoolSize** {Number} - Maximum connection pool size (default: 100 production, 10 development)
+ - **db.port** {Number} - *Deprecated*: the port of the database server (use connectionString instead)
+ - **db.host** {String} - *Deprecated*: the ip or domain of the database server (use connectionString instead)
+ - **db.name** {String} - *Deprecated*: the name of the database (use connectionString instead)
+ - **db.credentials** {Object} - *Deprecated*: credentials for db (use connectionString instead)
   - **db.credentials.username** {String}
   - **db.credentials.password** {String}
 - **env** {String} - the environment to run in.
+- **socketIo** {Object} - Socket.IO v4 configuration options
+ - **socketIo.options.cors** {Object} - CORS configuration for Socket.IO
+ - **socketIo.options.transports** {Array} - Transport methods (default: ['websocket', 'polling'])
 
 *Note: If options.env is "development", the dashboard will not require authentication and configuration will not be cached. Make sure to change this to "production" or something similar when deploying.*
+
+**Modernization**: This fork uses MongoDB driver 6.10.0 and Socket.IO v4.8.1. The old `db.host/port/name` pattern is deprecated in favor of `db.connectionString` + `db.connectionOptions` for MongoDB 6+ compatibility and TLS support.
 
 ### Caveats
 

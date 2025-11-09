@@ -1,0 +1,13 @@
+{
+  "name": "deployd-example-app",
+  "version": "1.0.0",
+  "description": "Example application using deployd MongoDB 6+ fork",
+  "private": true,
+  "scripts": {
+    "start": "node development.js",
+    "start:prod": "NODE_ENV=production node production.js"
+  },
+  "engines": {
+    "node": ">= 22.0.0"
+  }
+}

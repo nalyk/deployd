@@ -16,9 +16,17 @@ This example will return all the `posts` with an author "Joe":
 
 ### Advanced Queries
 
-When querying a [Collection](/docs/collections/), you can use special commands to create a more advanced query. 
+When querying a [Collection](/docs/collections/), you can use special commands to create a more advanced query.
 
 Deployd supports all of [MongoDB's conditional operators](http://www.mongodb.org/display/DOCS/Advanced+Queries#AdvancedQueries-ConditionalOperators); only the common operators and Deployd's custom commands are documented here.
+
+**Security Note**: For security, four dangerous MongoDB operators are blocked:
+- `$where` - Executes JavaScript on MongoDB server
+- `$function` - Executes JavaScript in aggregation pipeline
+- `$accumulator` - Custom aggregation with JavaScript
+- `$expr` - Can contain `$function`
+
+All other MongoDB operators are supported. See lib/resources/collection/index.js:143-162 for implementation details.
 
 When using an advanced query in REST, you must pass JSON as the query string, for example:
 	
@@ -134,3 +142,32 @@ The `$skip` command allows you to exclude a given number of the first objects re
 #### $limitRecursion <!-- api -->
 
 The `$limitRecursion` command allows you to override the default recursive limits in Deployd. This is useful when you want to query a very deeply nested structure of data. Otherwise you can still query nested structures, but Deployd will stop the recursion after 2 levels. See the [Collection Relationships guide](/docs/collections/relationships-between-collections.md) for more info.
+
+### Count Endpoint
+
+**New in this fork**: All collections automatically have a `/count` endpoint for efficient counting.
+
+#### GET /collection/count <!-- api -->
+
+Returns the count of documents matching the query without loading the full documents.
+
+**Example HTTP**:
+```
+GET /todos/count?completed=true
+```
+
+**Response**:
+```json
+{
+  "count": 42
+}
+```
+
+**Example dpd.js**:
+```javascript
+dpd.todos.get('count', {completed: true}, function(result) {
+  console.log('Completed todos:', result.count);
+});
+```
+
+**Implementation**: Native integration of dpd-count module (lib/resources/collection/index.js:895-962). Supports all query operators and runs the `On Count` event if defined.

@@ -1,137 +1,608 @@
 # deployd
 
-> the simplest way to build an api.
+> A simple API framework for building realtime applications with MongoDB.
 
-⚠️  Deployd is not actively maintained anymore. Important bug fixes PRs will be merged (if properly tested and documented) but the existing maintainers don't have time and motivation to build new features.
+## Fork Notice
 
-This fork aims to restore compatibility with modern MongoDB versions. The original repository only worked with MongoDB 4, while this one targets MongoDB 6 and later.
+This is a modernized fork of [deployd/deployd](https://github.com/deployd/deployd), which was discontinued in 2019. The original project only supported MongoDB 4 and Node.js versions up to 14. This fork has been extensively modernized to support current technology stacks and is actively maintained.
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/deployd/deployd)  [![Current Version](https://img.shields.io/npm/v/deployd.svg?style=flat-square)](https://www.npmjs.org/package/deployd) [![Build Status](https://img.shields.io/travis/deployd/deployd.svg?style=flat-square)](http://travis-ci.org/deployd/deployd)
+**Original Repository**: https://github.com/deployd/deployd (discontinued 2019)
+**Current Repository**: https://github.com/nalyk/deployd
 
-## overview
+## Modernization Summary
 
-Deployd is the simplest way to build realtime APIs for web and mobile apps. Ready-made, configurable Resources add common functionality to a Deployd backend, which can be further customized with JavaScript Events.
+This fork includes comprehensive updates to bring deployd to 2025 standards:
 
-## features
-
- - secure access to database APIs directly from untrusted clients (browser js, mobile apps, etc)
- - notify clients in realtime of events occurring within the database
- - user and session management
- - all APIs exposed over REST / HTTP
- - bundled browser JavaScript client
- - web socket authentication and session management
- - can be hosted by modern cloud platforms
- - support extension through node modules and npm
-
-[Read more about deployd](http://deployd.com)
-
-⚠️ Deployd v1.0.0 has been released. [Read the migration guide](#migration-guide-to-v1.0.0) below.
+- **Node.js 22 LTS** with TLS 1.0+ compatibility for managed MongoDB services
+- **MongoDB 6+** support with modern driver patterns (MongoClient, new CRUD operations)
+- **Socket.IO v4.8.1** upgrade from v1.7.4 (8 years of updates)
+- **Zero deprecation warnings** - all dependencies updated to latest stable versions
+- **Native integrations** - dpd-clientlib, dpd-dashboard, and dpd-count integrated directly
+- **Production-ready** - connection pooling, graceful error handling, optimized timeouts
+- **Modern architecture** - clean separation between library code and application code
 
 ## Requirements
 
-Deployd is built using Node.js and relies on MongoDB as its datastore.
-To run the current version you need **[Node.js](https://nodejs.org/)** 18 or newer and **MongoDB** 6 or newer installed on your system.
+- **Node.js**: 22.x LTS or newer
+- **MongoDB**: 6.0 or newer (supports both local and managed cloud instances)
+- **Network**: For managed MongoDB services with TLS 1.0/1.1, this fork includes compatibility fixes
 
-## quick start
+## Features
 
-	$ npm install deployd-cli -g
-	$ dpd create hello
-	$ cd hello
-	$ dpd -d
+### Core Features
+- REST/HTTP API exposure with automatic routing
+- Realtime WebSocket notifications via Socket.IO
+- User authentication and session management
+- Event-driven architecture with sandboxed JavaScript execution
+- Dashboard UI for resource configuration
+- Browser JavaScript client library
+- Extensible via npm modules
 
-## Best Practices
+### Production Features
+- **Health Check Endpoints** - Kubernetes-ready liveness, readiness, and startup probes
+- **Prometheus Metrics** - Full observability with HTTP, database, and Node.js metrics
+- **Structured Logging** - JSON logging with request ID correlation (Winston)
+- **Rate Limiting** - DoS protection with configurable thresholds
+- **Circuit Breaker** - Automatic MongoDB failure protection
+- **Request Tracing** - UUID-based request IDs for distributed systems
+- **Graceful Shutdown** - SIGTERM/SIGINT handlers for zero-downtime deployments
+- **Script Timeouts** - Configurable timeout enforcement for event scripts
+- **Security Hardening** - Query operator whitelist, request size limits
 
- 1. Once you start writing anything serious, you should start your project using a node script instead of the `dpd` command. [Read more here](http://docs.deployd.com/docs/server/run-script.html). `Dpd` is only meant to be used as a quick prototyping tool.
- 2. You are encouraged to structure your resources in a hierarchy based on what they belong to. Since deployd 1.1.0 you can name your resources like the following example:
+## Installation
 
-    1. Assume your user collection is named `users`
-    2. Their associated photos could be in a collection named `users/photos`.
-    3. A potential [dpd-event](https://www.npmjs.org/package/dpd-event) script associated to photos could go in `users/photos/resize`.
-
- 3. Once your project grows, you may find yourself writing code in one place that you need elsewhere. Take a look at [dpd-codemodule](https://www.npmjs.org/package/dpd-codemodule) for this purpose.
- 4. Keep in mind that `deployd` comes with **absolutely no built-in access control checking**. Anyone can delete, read, or update any information from any collection unless you close this down. We recommend plugging in your permission checks in `On BeforeRequest` events, and/or other appropriate places.
- 5. The [dpd-clientlib](https://www.npmjs.org/package/dpd-clientlib) package is provided mostly as a convenience and should probably not be used directly in production. Once your project outgrows it, feel free to replace it with something else. You may use any HTTP library and/or [socket.io](https://www.npmjs.org/package/socket.io) client implementation to interact with deployd. Please see the documentation for more information.
- 6. You will find plugins for various sorts of tasks on [npm](https://www.npmjs.org/) if you search for `dpd`. Deployd plugins start with dpd-*name*
- 7. You can use `deployd` in a cluster configuration. In order for the socket.io adapter to be able to emit to clients on other cluster nodes, you will need to use Redis as a pub/sub server. See [here](https://github.com/deployd/deployd/pull/698) for more information.
- 8. Try not to run `dpd.somecollection.get()` type queries inside `On GET` handlers. 
-    1. These can have severe performance implications especially when running queries that return multiple results, because each subquery will execute at least once for every document returned. 
-    2. Instead you should put your logic in [dpd-event](https://www.npmjs.org/package/dpd-event) scripts that run as fewer queries as possible, and which concatenate the results using code. [lodash](https://www.npmjs.org/package/lodash) can be a good library to help with merging results.
- 
- ## Other notes:
- 
- - *emit to users* type calls that return multiple results (eg: `emit(dpd.users, {active: true}, 'postModified', this);`) are inefficient and should be avoided. Instead you should join sessions to rooms and emit to rooms instead. See PR [698](https://github.com/deployd/deployd/pull/698) for more info.
- - if you do not use [dpd-clientlib](https://www.npmjs.org/package/dpd-clientlib), keep in mind that you will need to associate the connected websocket with the session id after authenticating. You can do this by emitting a `server:setsession` message on the socket, with a payload of `{sid: 'sessionid'}`. You can get the session id by calling the `login` method of the user collection resource. See the documentation for more information.
-
-## Helpful Resources
-
- - [Docs](http://docs.deployd.com/)
- - [Getting Started Guide](http://docs.deployd.com/docs/getting-started/what-is-deployd.html)
- - [Hello World Tutorial](http://docs.deployd.com/docs/getting-started/your-first-api.html)
- - [API Docs](http://docs.deployd.com/api)
- - [Community Discussion Page](https://groups.google.com/forum/?fromgroups#!forum/deployd-users)
- - [Gitter Chat Page](https://gitter.im/deployd/deployd)
- - [Example Apps](http://docs.deployd.com/examples/)
-
-
-## Migration guide to v1.0.0
-
-v1.0.0 contains a big refactoring: the CLI, dashboard and client-lib has been extracted from the core to allow easier contributions and maintainability.  
-Here's a guide to help you migrate to v.1.0.0.
-
-If you start your application [using a node script (recommended)](http://docs.deployd.com/docs/server/run-script.html), you just need to update the `deployd` dependency and add the missing ones (client-lib and dashboard).
-
-```bash
-$ npm install deployd@latest --save
-$ npm install dpd-dashboard dpd-clientlib --save-dev
-```
-
-If you use the CLI to start your app (using `dpd` inside your app folder), you will need to uninstall the old global version of `deployd` and install `deployd-cli`.
-`npm uninstall deployd -g && npm install deployd-cli -g`
-
-If you have trouble making it work, feel free to ask for help on [the chat](https://gitter.im/deployd/deployd).
-
-## install from npm
-
-Once Node.JS is installed, open your terminal and type the following command:
+Install the deployd CLI globally:
 
 ```bash
 npm install deployd-cli -g
 ```
 
-the `dpd` command should be available. Type `dpd -V` and the current version should appear.
+Verify installation:
 
-## install on windows
+```bash
+dpd -V
+```
 
-The windows installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install MongoDB](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) 6 or later separately.
+## Quick Start
 
-## install on macosx
+### Create a New Application
 
-The macosx installer is deprecated. The recommended way is now npm (`npm install deployd-cli -g`) and [install MongoDB](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/) 6 or later separately.
+```bash
+dpd create myapp
+cd myapp
+dpd -d
+```
 
-## install from source
+This starts a development server with the dashboard available at `http://localhost:2403/dashboard`.
 
-	git clone https://github.com/deployd/deployd.git
-	npm install
+### Using the Example Application
 
-## unit & integration tests
+This repository includes a complete example application:
 
-	cd deployd
-        # make sure MongoDB 6+ is running
-        mongod &
-	npm test
+```bash
+# Development mode
+npm start
 
-## license
+# Production mode
+npm run start:prod
+```
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+The example app demonstrates:
+- Collection resources (articles, users)
+- User authentication
+- Event scripts
+- Dashboard configuration
 
-        http://www.apache.org/licenses/LICENSE-2.0
+### Creating Your Own Application
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Copy the example application as a template:
 
-    Copyright 2017 deployd llc
+```bash
+cp -r example-app/ myapp/
+cd myapp/
+cp .env.example .env
+```
+
+Edit `.env` with your MongoDB connection string:
+
+```bash
+MONGODB_URI=mongodb://localhost:27017/myapp
+# or for managed services:
+# MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/myapp?tls=true
+```
+
+Start the server:
+
+```bash
+node development.js
+```
+
+Visit `http://localhost:2403/dashboard` to configure resources.
+
+## Project Structure
+
+```
+deployd/
+├── lib/                    # Core framework code
+│   ├── resources/          # Built-in resource types
+│   │   ├── collection/     # Collection resource
+│   │   ├── user-collection.js
+│   │   ├── files.js
+│   │   └── dpd-count.js
+│   ├── clib/              # Client library
+│   ├── dashboard/         # Dashboard UI
+│   ├── db.js              # MongoDB abstraction layer
+│   ├── server.js          # HTTP + Socket.IO server
+│   └── ...
+├── example-app/           # Example application
+│   ├── resources/         # API resources
+│   ├── development.js     # Dev server entry point
+│   ├── production.js      # Production server
+│   └── .env.example       # Configuration template
+├── test/                  # Test suite
+└── index.js               # Library entry point
+```
+
+## Usage Patterns
+
+### Programmatic Server
+
+Instead of using the `dpd` CLI, create a Node.js script for production use:
+
+```javascript
+const deployd = require('deployd');
+
+const server = deployd({
+  port: process.env.PORT || 3000,
+  env: 'production',
+  db: {
+    connectionString: process.env.MONGODB_URI || 'mongodb://localhost/mydb',
+    connectionOptions: {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 30000,
+      tls: true,
+      minPoolSize: 1,
+      maxPoolSize: 10
+    }
+  }
+});
+
+server.listen();
+
+server.on('listening', () => {
+  console.log(`Server running on port ${server.options.port}`);
+});
+
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});
+```
+
+### Attach to Existing Express App
+
+```javascript
+const express = require('express');
+const deployd = require('deployd');
+
+const app = express();
+
+deployd.attach(app, {
+  socketIo: { /* socket.io options */ },
+  db: { connectionString: process.env.MONGODB_URI }
+});
+
+app.listen(3000);
+```
+
+## Testing
+
+### Run All Tests
+
+```bash
+npm test
+```
+
+### Run End-to-End Tests
+
+```bash
+npm run test:e2e
+```
+
+### Remote MongoDB Testing
+
+Set the `MONGODB_URI` environment variable to test against a remote database:
+
+```bash
+MONGODB_URI=mongodb+srv://user:pass@cluster/db npm test
+```
+
+## Configuration
+
+### Database Options
+
+Configure MongoDB connection in your server script:
+
+```javascript
+db: {
+  connectionString: 'mongodb+srv://user:pass@cluster/dbname',
+  connectionOptions: {
+    tls: true,
+    tlsAllowInvalidCertificates: true,  // For managed services with custom certs
+    tlsAllowInvalidHostnames: true,
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
+    minPoolSize: 10,      // Production: 10 (development: 1)
+    maxPoolSize: 100      // Production: 100 (development: 10)
+  }
+}
+```
+
+### Production Configuration
+
+Full production configuration with all features enabled:
+
+```javascript
+const deployd = require('deployd');
+
+const server = deployd({
+  port: process.env.PORT || 3000,
+  env: 'production',
+
+  // Database with production pool sizes
+  db: {
+    connectionString: process.env.MONGODB_URI,
+    connectionOptions: {
+      minPoolSize: 10,
+      maxPoolSize: 100,
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 30000
+    }
+  },
+
+  // Request body size limit (default: 1MB)
+  maxBodySize: 5 * 1024 * 1024,  // 5MB
+
+  // Event script timeout (default: 10000ms)
+  scriptTimeout: 5000,  // 5 seconds
+
+  // Rate limiting (disabled by default)
+  rateLimit: {
+    enabled: true,
+    windowMs: 60000,  // 1 minute window
+    max: 100          // 100 requests per window
+  }
+});
+
+server.listen();
+```
+
+### Environment Variables
+
+Recommended environment variables for production:
+
+```bash
+# Required
+MONGODB_URI=mongodb+srv://user:pass@cluster/dbname
+NODE_ENV=production
+PORT=3000
+
+# Optional
+LOG_LEVEL=info              # debug, info, warn, error
+MAX_BODY_SIZE=5242880       # 5MB in bytes
+SCRIPT_TIMEOUT=5000         # 5 seconds
+RATE_LIMIT_WINDOW=60000     # 1 minute
+RATE_LIMIT_MAX=100          # requests per window
+```
+
+### Socket.IO Options
+
+Configure WebSocket behavior:
+
+```javascript
+socketIo: {
+  options: {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    },
+    transports: ['websocket', 'polling']
+  }
+}
+```
+
+## Production Deployment
+
+### Health Check Endpoints
+
+Deployd provides Kubernetes-compatible health check endpoints:
+
+```yaml
+# Kubernetes configuration example
+livenessProbe:
+  httpGet:
+    path: /__health/live
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /__health/ready
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+startupProbe:
+  httpGet:
+    path: /__health/startup
+    port: 3000
+  failureThreshold: 30
+  periodSeconds: 10
+```
+
+**Available endpoints:**
+- `GET /__health/live` - Returns 200 if server is running
+- `GET /__health/ready` - Returns 200 if database is connected, 503 otherwise
+- `GET /__health/startup` - Returns 200 if startup complete, 503 otherwise
+
+### Metrics Endpoint
+
+Prometheus metrics available at:
+
+```bash
+# Scrape configuration
+curl http://localhost:3000/metrics
+```
+
+**Metrics exposed:**
+- HTTP request duration and count (by method, route, status)
+- Database operation duration and count (by operation, collection)
+- Circuit breaker state
+- Active database connections
+- Active sessions and WebSocket connections
+- Node.js default metrics (CPU, memory, event loop lag, GC)
+
+### Logging
+
+Structured JSON logging in production (human-readable in development):
+
+```javascript
+// Production log format (JSON)
+{
+  "timestamp": "2025-11-09 10:15:23",
+  "level": "error",
+  "message": "Request error",
+  "requestId": "a3b4c5d6-e7f8-9012-3456-789abcdef012",
+  "method": "POST",
+  "url": "/users",
+  "service": "deployd",
+  "environment": "production"
+}
+```
+
+**Log files (production only):**
+- `error.log` - Error level logs
+- `combined.log` - All logs
+
+**Log level control:**
+```bash
+LOG_LEVEL=info node server.js  # debug, info, warn, error
+```
+
+### Docker Deployment
+
+Example Dockerfile:
+
+```dockerfile
+FROM node:22-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY . .
+
+EXPOSE 3000
+
+# Graceful shutdown support
+STOPSIGNAL SIGTERM
+
+CMD ["node", "production.js"]
+```
+
+Example docker-compose.yml:
+
+```yaml
+version: '3.8'
+services:
+  deployd:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/myapp
+      - LOG_LEVEL=info
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+```
+
+## Best Practices
+
+1. **Use programmatic servers** - The `dpd` CLI is for prototyping only. Production applications should use a Node.js script.
+
+2. **Implement access control** - Deployd has no built-in access control. Use `BeforeRequest` events to enforce permissions:
+
+   ```javascript
+   // On BeforeRequest
+   if (!me && (this.method === 'POST' || this.method === 'PUT' || this.method === 'DELETE')) {
+     cancel("Authentication required", 401);
+   }
+   ```
+
+3. **Structure resources hierarchically** - Use namespaced resource names:
+   - `users` - user collection
+   - `users/photos` - user photos
+   - `users/photos/resize` - photo processing event
+
+4. **Avoid nested queries** - Don't run `dpd.collection.get()` inside `On GET` handlers. Use separate event endpoints and merge results in code.
+
+5. **Use connection pooling** - Configure `minPoolSize: 10` and `maxPoolSize: 100` for production deployments.
+
+6. **Handle TLS properly** - For managed MongoDB services (DigitalOcean, Atlas, etc.), ensure TLS settings match your provider's requirements.
+
+7. **Enable rate limiting** - Protect against DoS attacks by enabling rate limiting in production.
+
+8. **Monitor metrics** - Set up Prometheus scraping and Grafana dashboards for production monitoring.
+
+9. **Configure timeouts** - Set appropriate `scriptTimeout` values based on your event script complexity.
+
+10. **Use request IDs** - Request IDs are automatically generated and included in logs for tracing.
+
+## Migration from Original Deployd
+
+### From v1.0.0 or Earlier
+
+This fork maintains API compatibility with the original deployd v1.0.0+. If you're upgrading from the original repository:
+
+1. Update Node.js to version 22 or newer
+2. Update MongoDB to version 6 or newer
+3. Install dependencies:
+   ```bash
+   npm install deployd@latest --save
+   npm install dpd-dashboard dpd-clientlib --save-dev
+   ```
+4. Update your server script's database configuration to use modern connection options (see Configuration section)
+
+### Breaking Changes
+
+- MongoDB 6+ required (MongoDB 2.x, 3.x, 4.x no longer supported)
+- Node.js 22+ required (older versions not tested)
+- Socket.IO v4 client required if using custom WebSocket clients
+
+## Documentation
+
+- [Full Documentation](http://docs.deployd.com/)
+- [Getting Started Guide](http://docs.deployd.com/docs/getting-started/what-is-deployd.html)
+- [API Documentation](http://docs.deployd.com/api)
+- [Example Applications](http://docs.deployd.com/examples/)
+
+## Community
+
+- [Gitter Chat](https://gitter.im/deployd/deployd)
+- [Google Group](https://groups.google.com/forum/#!forum/deployd-users)
+
+## Technical Details
+
+### Node.js 22 Compatibility
+
+This fork includes TLS compatibility fixes for Node.js 22, which disabled TLS 1.0/1.1 by default. The fix enables TLS 1.0+ for compatibility with managed MongoDB services that may use older TLS versions.
+
+### Socket.IO v4 Upgrade
+
+Complete upgrade from Socket.IO v1.7.4 (2017) to v4.8.1:
+- Modern WebSocket transport with better performance
+- CORS configuration for cross-origin WebSocket connections
+- Client library updated to match (46KB minified, 23% smaller)
+- Rooms API updated (Set-based instead of array-based)
+
+### MongoDB Driver Modernization
+
+Updated to MongoDB driver 6.10.0 with modern patterns:
+- MongoClient connection pattern
+- Modern CRUD operations (insertOne/Many, updateOne/Many, etc.)
+- Proper connection pooling and timeout handling
+- Promise-based API with callback compatibility
+
+### Production Hardening
+
+**Performance:**
+- Router caching in production (config reload eliminated)
+- Connection pooling (10-100 connections, environment-based)
+- Async.eachSeries routing (nextTick recursion eliminated)
+- HTTP Keep-Alive (65s timeout)
+
+**Reliability:**
+- Circuit breaker for MongoDB operations (opossum)
+- Graceful shutdown handlers (SIGTERM/SIGINT with 30s timeout)
+- Startup vs runtime error distinction
+- Script timeout enforcement (configurable, default 10s)
+- Router double-call protection
+
+**Security:**
+- MongoDB operator whitelist (blocks $where, $function, $expr, $accumulator)
+- Request body size limits (configurable, default 1MB)
+- Rate limiting (optional, configurable)
+- Request ID tracking (UUID-based)
+
+**Observability:**
+- Prometheus metrics endpoint (/metrics)
+- Structured JSON logging (Winston)
+- Health check endpoints (Kubernetes-compatible)
+- Request tracing with correlation IDs
+- Performance monitoring (slow script detection)
+
+## Development
+
+### Clone and Install
+
+```bash
+git clone https://github.com/nalyk/deployd.git
+cd deployd
+npm install
+```
+
+### Run Tests
+
+```bash
+# Start MongoDB (if testing locally)
+mongod &
+
+# Run test suite
+npm test
+```
+
+### Run Example Application
+
+```bash
+npm start
+```
+
+## License
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Copyright 2017 deployd llc
+
+## Fork Maintenance
+
+This fork is actively maintained by [nalyk](https://github.com/nalyk) with focus on:
+- Modern Node.js and MongoDB compatibility
+- Security updates for all dependencies
+- Performance optimizations
+- Production readiness
+
+For issues, feature requests, or contributions, please visit the [GitHub repository](https://github.com/nalyk/deployd).
