@@ -51,29 +51,50 @@ This fork includes comprehensive updates to bring deployd to 2025 standards:
 
 ## Installation
 
-Install the deployd CLI globally:
+Install deployd as a dependency in your project:
 
 ```bash
-npm install deployd-cli -g
-```
-
-Verify installation:
-
-```bash
-dpd -V
+npm install deployd --save
 ```
 
 ## Quick Start
 
-### Create a New Application
+### 1. Clone and Run Example Application
 
 ```bash
-dpd create myapp
-cd myapp
-dpd -d
+git clone https://github.com/nalyk/deployd.git
+cd deployd
+npm install
+npm start
 ```
 
-This starts a development server with the dashboard available at `http://localhost:2403/dashboard`.
+Visit `http://localhost:2403/dashboard` to explore the dashboard and example resources.
+
+### 2. Create Your Own Application
+
+```bash
+# Use example-app as a template
+cp -r example-app/ myapp/
+cd myapp/
+cp .env.example .env
+
+# Configure your MongoDB connection in .env
+# MONGODB_URI=mongodb://localhost:27017/myapp
+
+# Start development server
+node development.js
+```
+
+The dashboard will be available at `http://localhost:2403/dashboard`.
+
+## Note for Original Deployd Users
+
+This fork does not support the legacy `dpd` CLI tool. The CLI:
+- Has not been updated since 2017
+- Is incompatible with Node.js 22 and MongoDB 6+
+- Uses deprecated configuration formats
+
+Use the programmatic Node.js approach shown above instead. See the [Migration Guide](docs/deployd_docs/getting-started/migration-guide.md) for more details.
 
 ### Using the Example Application
 
